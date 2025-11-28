@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getTokenFromCookies } from '@/lib/server/auth';
 import {
   ensureUserHydrated,
@@ -8,17 +8,15 @@ import {
 } from '@/lib/server/store/todosStore';
 
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const token = getTokenFromCookies(req);
   if (!token)
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   const userId = await ensureUserHydrated(token);
-  const url = new URL(req.url);
-  const fallback = url.pathname.split('/').pop();
-  const paramId = params?.id ?? fallback;
-  const id = Number(paramId);
+  const { id: idParam } = await ctx.params;
+  const id = Number(idParam);
   if (!Number.isFinite(id))
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   const todo = await getTodoForUser(userId, id);
@@ -28,17 +26,15 @@ export async function GET(
 }
 
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const token = getTokenFromCookies(req);
   if (!token)
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   const userId = await ensureUserHydrated(token);
-  const url = new URL(req.url);
-  const fallback = url.pathname.split('/').pop();
-  const paramId = params?.id ?? fallback;
-  const id = Number(paramId);
+  const { id: idParam } = await ctx.params;
+  const id = Number(idParam);
   if (!Number.isFinite(id))
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   const body = (await req.json()) as Partial<{
@@ -52,17 +48,15 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const token = getTokenFromCookies(req);
   if (!token)
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   const userId = await ensureUserHydrated(token);
-  const url = new URL(req.url);
-  const fallback = url.pathname.split('/').pop();
-  const paramId = params?.id ?? fallback;
-  const id = Number(paramId);
+  const { id: idParam } = await ctx.params;
+  const id = Number(idParam);
   if (!Number.isFinite(id))
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   const ok = await deleteTodoForUser(userId, id);
