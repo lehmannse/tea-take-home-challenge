@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fetchMe } from "@/lib/server/auth";
 
@@ -14,7 +15,11 @@ type Store = {
 	users: Record<number, { todos: Todo[] }>;
 };
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+// Use ephemeral tmp dir in production/serverless where repo filesystem is read-only.
+// Keep project local ".data" during local dev.
+const BASE_DIR =
+	process.env.NODE_ENV === "production" ? os.tmpdir() : process.cwd();
+const DATA_DIR = path.join(BASE_DIR, ".data");
 const DATA_FILE = path.join(DATA_DIR, "todos.json");
 
 async function ensureDataFile(): Promise<void> {
